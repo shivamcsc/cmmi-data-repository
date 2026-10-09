@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Browse stored data</h1>
+
+<form method="get" class="filters">
+  <label>Track
+    <select name="family" onchange="this.form.submit()">
+      <option value="development" {% if family == 'development' %}selected{% endif %}>CMMI ML 5.0 (Development)</option>
+      <option value="services" {% if family == 'services' %}selected{% endif %}>CMMI ML 3.0 (Services)</option>
+    </select>
+  </label>
+  <label>Project
+    <select name="project">
+      <option value="">All</option>
+      {% for c in categories %}{% if c.code == family %}
+        {% for p in c.projects %}<option value="{{ p.id }}" {% if selected.project == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+      {% endif %}{% endfor %}
+    </select>
+  </label>
+  <label>Period
+    <select name="period">
+      <option value="">All</option>
+      {% for p in periods %}<option value="{{ p.id }}" {% if selected.period == p.id %}selected{% endif %}>{{ p.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="check"><input type="checkbox" name="unreviewed" value="1" {% if include_unreviewed %}checked{% endif %}> include unconfirmed</label>
+  <button type="submit">Filter</button>
+  <a class="btn-link" href="/data?family={{ family }}">Clear</a>
+</form>
+
+<p class="muted">
+  {{ total }} row(s){% if not include_unreviewed %} across confirmed uploads{% endif %}.
+  {% if total > rows|length %}Showing the first {{ rows|length }}.{% endif %}
+  {% if columns %}Showing the {{ columns|length }} column(s) that hold data.{% endif %}
+  {% if total %}<a class="small-btn link-btn" href="/export/records.csv?{{ request.url.query }}">⤓ Download all as CSV</a>{% endif %}
+</p>
+
+{% if rows %}
+<div class="scroll">
+<table class="data">
+  <thead>
+    <tr>
+      <th class="rownum">Row</th>
+      <th>Uploaded as</th>
+      <th>Period</th>
+      {% for label in labels %}
+      <th class="{{ 'keycol' if columns[loop.index0] == key_column }}">
+        {{ label }}{% if units[loop.index0] %}<span class="unit">{{ units[loop.index0] }}</span>{% endif %}
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td class="rownum">{{ r.row_index }}</td>
+      <td class="trunc">{{ r.upload_name }}</td>
+      <td>{{ r.period_label }}</td>
+      {% for cell in r.cells %}<td class="{{ 'keycol' if columns[loop.index0] == key_column }}">{{ cell }}</td>{% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Nothing stored yet for this filter. Confirmed uploads appear here — check <a href="/uploads">Uploads</a> for sheets still awaiting review.</p>
+{% endif %}
+{% endblock %}

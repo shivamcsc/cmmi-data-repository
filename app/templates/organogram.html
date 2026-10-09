@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Vertical organogram</h1>
+<p class="muted">Which division each project sits in and who runs it, taken from the organisation's benchmark sheet. The <strong>vertical head</strong> column is what decides who gives the first approval on a project's sheets.</p>
+
+{% if created is defined and created %}
+<div class="alert ok">
+  <strong>Created {{ created|length }} vertical head sign-in(s).</strong>
+  Give each person their password once — it is not shown again, and they must change it at first sign-in.
+  <table class="credentials">
+    <tr><th>Name</th><th>Login id</th><th>Password</th></tr>
+    {% for c in created %}
+    <tr><td>{{ c.full_name }}</td><td><code>{{ c.username }}</code></td><td><code>{{ c.password }}</code></td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% elif recheck is defined %}
+<div class="alert ok">Vertical head sign-ins are up to date — project assignments were refreshed.</div>
+{% endif %}
+
+<div class="scroll">
+<table class="data fit">
+  <thead>
+    <tr>
+      <th>Vertical division</th><th>Domain</th><th>Project</th>
+      <th>Business manager</th><th>Technical manager</th>
+      <th class="keycol">Vertical head</th><th>Engineers</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for e in entries %}
+    <tr>
+      <td><strong>{{ e.vertical_division or '' }}</strong></td>
+      <td><span class="chip">{{ e.domain or '' }}</span></td>
+      <td>{% if e.project %}{{ e.project.name }}
+          {% else %}<span class="muted">{{ e.project_name or '' }} (no match)</span>{% endif %}</td>
+      <td>{{ e.business_manager or '' }}</td>
+      <td>{{ e.technical_manager or '' }}</td>
+      <td class="keycol">{{ e.vertical_head or '' }}</td>
+      <td>{{ e.engineers or '' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if heads %}
+<h2>Vertical heads and their approvals</h2>
+<table>
+  <thead><tr><th>Vertical head</th><th>Projects they would approve</th><th>Sign-in</th></tr></thead>
+  <tbody>
+  {% for name, info in heads.items() %}
+    <tr>
+      <td><strong>{{ name }}</strong></td>
+      <td>{% for p in info.projects %}<span class="chip">{{ p.name }}</span> {% endfor %}</td>
+      <td>
+        {% if info.account and info.assigned %}<span class="status success">active · assigned</span>
+        {% elif info.account %}<span class="status partial">account exists, no projects assigned</span>
+        {% else %}<span class="muted">no sign-in yet</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if may_manage %}
+<form method="post" action="/organogram/create-heads" class="form"
+      onsubmit="return confirm('Create a sign-in for each vertical head who does not have one, and set their projects from this table?');">
+  <p class="muted">Create the missing vertical head sign-ins and set each one's projects from the table above. Existing accounts keep their password and only have their projects refreshed.</p>
+  <button type="submit" class="primary">Create sign-ins from this organogram</button>
+</form>
+{% endif %}
+{% endif %}
+
+<h2>Organogram charts</h2>
+{% set charts = files | selectattr('viewable') | list %}
+{% if charts %}
+<p class="muted">The charts themselves, shown here. Use the full-screen link if a chart is dense.</p>
+{% for f in charts %}
+<figure class="chart">
+  <figcaption>{{ f.name }}
+    <a href="/organogram/file/{{ f.name | urlencode }}" target="_blank">open full screen →</a>
+  </figcaption>
+  <embed src="/organogram/file/{{ f.name | urlencode }}#view=FitH" type="application/pdf">
+</figure>
+{% endfor %}
+{% endif %}
+
+<h2>Source documents</h2>
+<p class="muted">The organogram files from both <code>Vertical Organogram</code> folders. PDFs open here; the rest download.</p>
+<table>
+  <thead><tr><th>Document</th><th>Type</th><th class="r">Size</th><th></th></tr></thead>
+  <tbody>
+  {% for f in files %}
+    <tr>
+      <td>{{ f.name }}</td>
+      <td><span class="chip">{{ f.kind }}</span></td>
+      <td class="r">{{ '%.0f'|format(f.size_kb) }} KB</td>
+      <td class="r"><a href="/organogram/file/{{ f.name | urlencode }}" {% if f.viewable %}target="_blank"{% endif %}>
+        {{ 'View' if f.viewable else 'Download' }}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CMMI Data Repository{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="/">CMMI Data Repository</a>
+    <nav>
+      <a href="/upload">Upload sheet</a>
+      <a href="/uploads">Uploads{% if pending_count %} <span class="badge">{{ pending_count }}</span>{% endif %}</a>
+      <a href="/data">Browse Data</a>
+      <a href="/columns">Column Data</a>
+      <a href="/organogram">Organogram</a>
+      <a href="/hierarchy">Hierarchy</a>
+      {% if user and auth.can_see_activity(user) %}<a href="/activity">Activity</a>{% endif %}
+      {% if user and auth.can_manage_users(user) %}<a href="/users">Sign-ins</a>{% endif %}
+    </nav>
+    {% if user %}
+    <div class="who">
+      <span>{{ user.full_name }}<em>{{ auth.ROLE_LABELS[user.role] }}</em></span>
+      <a href="/change-password" title="Change your password">Change password</a>
+      <a href="/logout">Sign out</a>
+    </div>
+    {% endif %}
+  </div>
+</header>
+<main class="wrap">
+  {% block body %}{% endblock %}
+</main>
+<footer class="wrap"><p>CSC &middot; CMMI ML 5.0 (Development) and ML 3.0 (Services)</p></footer>
+</body>
+</html>

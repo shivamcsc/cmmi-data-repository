@@ -1,0 +1,12 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+cryptography>=42.0
+pandas>=2.0
+openpyxl>=3.1
+xlrd>=2.0
+python-multipart>=0.0.9
+Jinja2>=3.1
+python-dotenv>=1.0
+itsdangerous>=2.1

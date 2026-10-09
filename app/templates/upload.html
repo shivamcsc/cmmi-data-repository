@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Upload a data collection sheet</h1>
+{% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+
+<form method="post" action="/upload" enctype="multipart/form-data" class="form">
+  <div class="row">
+    <label>Track
+      <select name="category_select" id="category" required>
+        <option value="">Choose…</option>
+        {% for c in categories %}{% if c.projects | selectattr('id', 'in', allowed_ids) | list %}
+        <option value="{{ c.id }}">{{ c.name }}</option>{% endif %}{% endfor %}
+      </select>
+    </label>
+    <label>Project
+      <select name="project_id" id="project" required disabled>
+        <option value="">Choose a track first</option>
+      </select>
+    </label>
+  </div>
+
+  <label>Sheet file
+    <input type="file" name="sheet" id="sheet" accept=".xlsx,.xlsm,.xls,.csv" required>
+  </label>
+
+  <fieldset>
+    <legend>Reporting period</legend>
+    <p class="hint" id="hint">Pick a file and the period is read from its name — correct it if it is wrong.</p>
+    <label>Period label
+      <input type="text" name="period_label" id="period_label" list="known-periods"
+             placeholder="e.g. Cycle 3 (Apr-Jun 2026)" required>
+      <datalist id="known-periods">
+        {% for p in known_periods %}<option value="{{ p.label }}">{% endfor %}
+      </datalist>
+    </label>
+    <div class="row">
+      <label>Covers from <input type="date" name="period_start" id="period_start"></label>
+      <label>Covers to <input type="date" name="period_end" id="period_end"></label>
+    </div>
+  </fieldset>
+
+  <label>Source folder <input type="text" name="source_folder" placeholder="e.g. CMMI ML 5.0 (Development)/Current/Digipay/Cycle 3"></label>
+  <p class="hint">Recorded as uploaded by <strong>{{ user.full_name }}</strong>. It then goes to the Vertical Head and then the CTO for approval.</p>
+  <label>Notes <textarea name="notes" rows="2" placeholder="anything worth recording about this sheet"></textarea></label>
+  <label class="check"><input type="checkbox" name="allow_duplicate" value="1"> Load anyway even if this exact file was already stored</label>
+
+  <button type="submit">Upload and store</button>
+</form>
+
+<script>
+const projectsByCategory = {};
+document.getElementById('category').addEventListener('change', async function () {
+  const select = document.getElementById('project');
+  select.innerHTML = '<option value="">Loading…</option>';
+  select.disabled = true;
+  if (!this.value) { select.innerHTML = '<option value="">Choose a track first</option>'; return; }
+  const response = await fetch('/api/projects?category=' + this.value);
+  const projects = await response.json();
+  select.innerHTML = '<option value="">Choose…</option>' +
+    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  select.disabled = false;
+});
+
+document.getElementById('sheet').addEventListener('change', async function () {
+  if (!this.files.length) return;
+  const name = this.files[0].name;
+  const response = await fetch('/api/suggest-period?filename=' + encodeURIComponent(name));
+  const data = await response.json();
+  const hint = document.getElementById('hint');
+  if (data.label) {
+    const label = document.getElementById('period_label');
+    if (!label.value) label.value = data.label;
+    if (data.start_date) document.getElementById('period_start').value = data.start_date;
+    if (data.end_date) document.getElementById('period_end').value = data.end_date;
+    hint.textContent = 'Read "' + data.label + '" from the file name — correct it if that is wrong.';
+  } else {
+    hint.textContent = 'No period found in the file name — please type it in.';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Overview</h1>
+{% if rejected_count %}
+<div class="alert error"><strong>{{ rejected_count }} sheet(s) were turned down</strong> and need correcting.
+  <a href="/uploads?review=rejected">See why →</a></div>
+{% endif %}
+{% if pending_count %}
+<div class="alert warn"><strong>{{ pending_count }} sheet(s) are waiting on your approval.</strong>
+  <a href="/uploads?review={{ {'vertical_head':'pending_vertical','admin':'pending_admin','cto':'pending_cto'}[user.role] }}">Review them →</a></div>
+{% endif %}
+<div class="cards">
+  <div class="card"><span class="num">{{ counts.uploads }}</span><span class="lbl">Sheets uploaded</span></div>
+  <div class="card"><span class="num">{{ counts.dev_rows }}</span><span class="lbl">Development rows</span></div>
+  <div class="card"><span class="num">{{ counts.svc_rows }}</span><span class="lbl">Services rows</span></div>
+  <div class="card"><span class="num">{{ counts.periods }}</span><span class="lbl">Reporting periods</span></div>
+</div>
+
+<h2>Projects</h2>
+<table>
+  <thead><tr><th>Track</th><th>Project</th><th class="r">Uploads</th><th class="r">Rows</th><th>Last upload</th><th></th></tr></thead>
+  <tbody>
+  {% for row in summary %}
+    <tr>
+      <td><span class="tag {{ row.category_code }}">{{ row.category }}</span></td>
+      <td>{{ row.project }}</td>
+      <td class="r">{{ row.uploads }}</td>
+      <td class="r">{{ row.rows }}</td>
+      <td>{% if row.last_upload %}{{ row.last_upload.strftime('%d %b %Y %H:%M') }}{% else %}<span class="muted">never</span>{% endif %}</td>
+      <td class="r"><a href="/data?family={{ 'services' if row.category_code == 'services' else 'development' }}&project={{ row.id }}">view data</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Recent uploads</h2>
+{% if recent %}
+<table>
+  <thead><tr><th>When</th><th>Project</th><th>Period</th><th>File</th><th class="r">Rows</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for u in recent %}
+    <tr>
+      <td>{{ u.uploaded_at.strftime('%d %b %Y %H:%M') }}</td>
+      <td>{{ u.project.name }}</td>
+      <td>{{ u.period.label }}</td>
+      <td><a href="/uploads/{{ u.id }}">{{ u.original_filename }}</a></td>
+      <td class="r">{{ u.row_count }}</td>
+      <td><span class="status {{ u.status }}">{{ u.status }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Nothing uploaded yet. <a href="/upload">Upload the first sheet</a>.</p>
+{% endif %}
+{% endblock %}

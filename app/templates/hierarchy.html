@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% macro node_box(p, children, rollup) %}
+  <div class="node{{ ' unit' if p.is_unit }}">
+    <span class="person">
+      {%- if p.name %}{{ p.name }}{% else %}{{ p.sub_department or p.role or 'Team' }}{% endif -%}
+      {%- set roll = rollup.get(p.id) %}
+      {#- a box shown only for context, such as the MD, carries no count: the
+          strength below it belongs to the vertical, not to him -#}
+      {%- if p.counted and roll and (p.headcount or roll[1] or children.get(p.id)) %}
+        <span class="count">
+          {{ roll[0] }} in post
+          {%- if roll[1] %} · <span class="hiring">{{ roll[1] }} to be hired</span>{% endif %}
+          · {{ roll[2] }} sanctioned
+        </span>
+      {%- endif -%}
+      {%- if p.inferred %} <span class="guess" title="Read from the chart's layout, not stated in writing">inferred</span>{% endif -%}
+    </span>
+    {% if p.role and p.name and p.role != 'Team member' %}<span class="role">{{ p.role }}</span>{% endif %}
+    {% if p.sub_department and p.name %}<span class="area">{{ p.sub_department }}</span>{% endif %}
+    {% if p.level %}<span class="area">{{ p.level }}</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro branch(people, children, depth, rollup) %}
+<ul class="tree{{ ' root' if depth == 0 }}">
+  {% for p in people %}
+  <li>
+    {% if children.get(p.id) %}
+      {# a box with people under it folds away, so a large vertical stays readable #}
+      <details {% if depth < 2 %}open{% endif %}>
+        <summary>{{ node_box(p, children, rollup) }}</summary>
+        {{ branch(children[p.id], children, depth + 1, rollup) }}
+      </details>
+    {% else %}
+      {{ node_box(p, children, rollup) }}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{% block body %}
+<h1>Who reports to whom</h1>
+
+<div class="filters">
+  {% for value, name in verticals %}
+  <a class="small-btn link-btn{{ ' go-btn' if value == chosen }}" href="/hierarchy?vertical={{ value }}">{{ name }}</a>
+  {% endfor %}
+</div>
+
+{% if roots %}
+<p class="muted">
+  {{ label }} &middot; {{ total }} box(es)
+  {%- if source %} &middot; read from <a href="/organogram/file/{{ source | urlencode }}" target="_blank">{{ source }}</a>{% endif %}
+</p>
+
+{% if inferred_count %}
+<div class="alert warn">
+  {{ inferred_count }} reporting line(s) are marked <span class="guess">inferred</span> — this chart draws
+  boxes without stating who reports to whom, so the line was taken from each box's position.
+  Check them against the chart before relying on them.
+</div>
+{% endif %}
+{% if chosen == 'technology' %}
+<div class="note">
+  Read from the chart: each unit, its lead, and the team listed in that unit's column.
+  A <em>Replacement&nbsp;-&nbsp;NN</em> on the chart is a post still to be hired rather than a
+  person, so it is counted instead of being listed. A box reading
+  <span class="count">2 in post · 1 to be hired · 3 sanctioned</span> accounts for all three.
+  Click any box with people under it to fold it away.
+</div>
+{% endif %}
+
+<div class="cards small">
+  <div class="card"><span class="num">{{ totals[0] }}</span><span class="lbl">In post</span></div>
+  <div class="card"><span class="num">{{ totals[1] }}</span><span class="lbl">To be hired</span></div>
+  <div class="card"><span class="num">{{ totals[2] }}</span><span class="lbl">Sanctioned</span></div>
+</div>
+
+{{ branch(roots, children, 0, rollup) }}
+{% else %}
+<p class="muted">Nothing imported for this vertical yet. Run <code>scripts/import_hierarchy.py</code>.</p>
+{% endif %}
+{% endblock %}

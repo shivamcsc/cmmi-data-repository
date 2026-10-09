@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · CMMI Data Repository</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="centered">
+  <div class="signin">
+    <h1>CMMI Data Repository</h1>
+    <p class="muted">CSC · ML 5.0 (Development) and ML 3.0 (Services)</p>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login" class="form">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label>Login id
+        <input type="text" name="username" value="{{ username }}" autocomplete="username" autofocus required>
+      </label>
+      <label>Password
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Sign in</button>
+    </form>
+    <p class="muted small">Ask an administrator if you do not have a login id.</p>
+  </div>
+</body>
+</html>

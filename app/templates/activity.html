@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Activity — CMMI Data Repository{% endblock %}
+{% block body %}
+<div class="head">
+  <div>
+    <h1>Activity</h1>
+    <p class="hint">Who did what, newest first — every upload, every approval and
+      every sheet turned down, with the date it happened.</p>
+  </div>
+  <div class="badges">
+    <a class="small-btn go-btn" href="/activity.csv?project={{ selected.project or '' }}&amp;person={{ selected.person or '' }}&amp;action={{ selected.action or '' }}&amp;date_from={{ selected.date_from }}&amp;date_to={{ selected.date_to }}">⤓ Download CSV</a>
+  </div>
+</div>
+
+<div class="cards small">
+  <div class="card"><span class="num">{{ tally.total }}</span><span class="lbl">Actions</span></div>
+  <div class="card"><span class="num">{{ tally.uploads }}</span><span class="lbl">Sheets uploaded</span></div>
+  <div class="card"><span class="num">{{ tally.approvals }}</span><span class="lbl">Approvals given</span></div>
+  <div class="card"><span class="num">{{ tally.rejected }}</span><span class="lbl">Turned down</span></div>
+  <div class="card"><span class="num">{{ tally.people }}</span><span class="lbl">People involved</span></div>
+</div>
+
+<form method="get" class="filters">
+  <label>Project
+    <select name="project">
+      <option value="">All</option>
+      {% for c in categories %}<optgroup label="{{ c.name }}">
+        {% for p in c.projects %}<option value="{{ p.id }}" {% if selected.project == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+      </optgroup>{% endfor %}
+    </select>
+  </label>
+  <label>Person
+    <select name="person">
+      <option value="">Everyone</option>
+      {% for p in people %}<option value="{{ p.id }}" {% if selected.person == p.id %}selected{% endif %}>{{ p.full_name }} — {{ auth.ROLE_LABELS[p.role] }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Action
+    <select name="action">
+      <option value="">All</option>
+      <optgroup label="Sheets">
+        {% for a in sheet_actions %}<option value="{{ a }}" {% if selected.action == a %}selected{% endif %}>{{ action_labels[a] }}</option>{% endfor %}
+      </optgroup>
+      <optgroup label="Sign-ins">
+        {% for a in account_actions %}<option value="{{ a }}" {% if selected.action == a %}selected{% endif %}>{{ action_labels[a] }}</option>{% endfor %}
+      </optgroup>
+    </select>
+  </label>
+  <label>From <input type="date" name="date_from" value="{{ selected.date_from }}"></label>
+  <label>To <input type="date" name="date_to" value="{{ selected.date_to }}"></label>
+  <button type="submit">Filter</button>
+  <a class="btn-link" href="/activity">Clear</a>
+</form>
+
+<p class="quick">Jump to
+  <a class="small-btn" href="/activity?date_from={{ today }}">Today</a>
+  <a class="small-btn" href="/activity?date_from={{ week_ago }}">Last 7 days</a>
+  <a class="small-btn" href="/activity?date_from={{ month_ago }}">Last 30 days</a>
+  {% if selected.project %}<span class="muted">Sign-in activity is hidden while one
+    project is chosen — an account is not tied to a project.</span>{% endif %}
+</p>
+
+{% if days %}
+<p class="muted">{{ total }} action{{ '' if total == 1 else 's' }}{% if total > shown_limit %},
+  showing the most recent {{ shown_limit }} — the CSV has all of them{% endif %}.</p>
+
+<table class="trail">
+  <thead>
+    <tr><th class="w-time">Time</th><th class="w-who">Who</th><th class="w-did">Did what</th>
+        <th>Project</th><th>Period</th><th>Sheet / account</th><th>Note</th></tr>
+  </thead>
+  <tbody>
+  {% for day, rows in days %}
+    <tr class="daybreak">
+      <th colspan="7">
+        {% if day == today %}Today{% elif day %}{{ day.strftime('%A, %d %B %Y') }}{% else %}Undated{% endif %}
+        <span class="muted">{{ rows|length }} action{{ '' if rows|length == 1 else 's' }}{% if day and day != today %} · {{ day.strftime('%d %b %Y') }}{% endif %}</span>
+      </th>
+    </tr>
+    {% for e in rows %}
+    <tr>
+      <td class="nowrap time">{{ e.at.strftime('%H:%M') if e.at else '—' }}</td>
+      <td class="who-cell">{{ e.actor_name }}
+          {% if e.actor_role %}<br><span class="tag {{ e.actor_role }}">{{ auth.ROLE_LABELS[e.actor_role] }}</span>{% endif %}</td>
+      <td><span class="act {{ e.action }}">{{ e.action_label }}</span></td>
+      <td>{% if e.upload %}{{ e.upload.project.name }}<br><span class="tag {{ e.upload.category.code }}">{{ e.upload.category.cmmi_level }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if e.upload %}{{ e.upload.period.label }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if e.upload %}<a href="/uploads/{{ e.upload.id }}">{{ e.subject }}</a>
+            <br><span class="muted">{{ e.upload.row_count }} row{{ '' if e.upload.row_count == 1 else 's' }}</span>
+          {% else %}{{ e.subject }}{% endif %}</td>
+      <td class="trunc">{% if e.note %}<span class="said">{{ e.note }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="note">No activity matches these filters. <a href="/activity">Clear them</a>.</p>
+{% endif %}
+
+<p class="muted small">Only the most recent sign-in is kept per account, not every
+  sign-in. Deleting an upload removes its row and so removes it from this trail.</p>
+{% endblock %}

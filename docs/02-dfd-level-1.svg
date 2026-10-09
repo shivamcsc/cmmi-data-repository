@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="470" viewBox="0 0 1020 470" role="img"
+           aria-label="Level 1 data flow: receive and hash the file, parse the workbook, coerce and store rows, approve through three stages, then browse and export. Each process writes to its own data store.">
+  <title>Level 1 data flow</title>
+  <style>
+    .bx   { fill:#ffffff; stroke:#0d1b3e; stroke-width:1.5 }
+    .ent  { fill:#eef1f6; stroke:#0d1b3e; stroke-width:1.5 }
+    .proc { fill:#ffffff; stroke:#2563eb; stroke-width:2 }
+    .store-line { stroke:#0d1b3e; stroke-width:1.5 }
+    .store-fill { fill:#eef1f6 }
+    .flow { stroke:#11162a; stroke-width:1.4; fill:none }
+    .flow-dash { stroke:#a12020; stroke-width:1.4; fill:none; stroke-dasharray:5 4 }
+    .t      { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:13px;   font-weight:600; fill:#11162a }
+    .t-sm   { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11.5px; font-weight:500; fill:#11162a }
+    .lbl    { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11px;   font-weight:500; fill:#616b80 }
+    .num    { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#2563eb }
+    .code   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11.5px; fill:#11162a }
+    .code-mut { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:10.5px; fill:#616b80 }
+    .card   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#616b80 }
+</style>
+  <rect width="1020" height="470" fill="#ffffff"/>
+        <defs>
+          <marker id="ar2-02" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- row of processes -->
+        <rect class="proc" x="10"  y="48" width="170" height="86" rx="10"/>
+        <text class="num" x="24"  y="68">1.0</text>
+        <text class="t-sm" x="95" y="88"  text-anchor="middle">Receive &amp; hash</text>
+        <text class="lbl" x="95" y="105" text-anchor="middle">refuse a repeat</text>
+        <text class="lbl" x="95" y="120" text-anchor="middle">read period from name</text>
+
+        <rect class="proc" x="220" y="48" width="170" height="86" rx="10"/>
+        <text class="num" x="234" y="68">2.0</text>
+        <text class="t-sm" x="305" y="88"  text-anchor="middle">Parse workbook</text>
+        <text class="lbl" x="305" y="105" text-anchor="middle">find header row</text>
+        <text class="lbl" x="305" y="120" text-anchor="middle">match each heading</text>
+
+        <rect class="proc" x="430" y="48" width="170" height="86" rx="10"/>
+        <text class="num" x="444" y="68">3.0</text>
+        <text class="t-sm" x="515" y="88"  text-anchor="middle">Coerce &amp; store</text>
+        <text class="lbl" x="515" y="105" text-anchor="middle">dates, numbers, text</text>
+        <text class="lbl" x="515" y="120" text-anchor="middle">unknowns &rarr; JSON</text>
+
+        <rect class="proc" x="640" y="48" width="170" height="86" rx="10"/>
+        <text class="num" x="654" y="68">4.0</text>
+        <text class="t-sm" x="725" y="88"  text-anchor="middle">Approve &times;3</text>
+        <text class="lbl" x="725" y="105" text-anchor="middle">head &rarr; admin &rarr; CTO</text>
+        <text class="lbl" x="725" y="120" text-anchor="middle">or turn down</text>
+
+        <rect class="proc" x="850" y="48" width="160" height="86" rx="10"/>
+        <text class="num" x="864" y="68">5.0</text>
+        <text class="t-sm" x="930" y="88"  text-anchor="middle">Browse</text>
+        <text class="lbl" x="930" y="105" text-anchor="middle">filter, CSV export</text>
+        <text class="lbl" x="930" y="120" text-anchor="middle">approved only</text>
+
+        <!-- inbound -->
+        <line class="flow" x1="10" y1="22" x2="95" y2="42" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="14" y="16">workbook</text>
+
+        <!-- process to process -->
+        <line class="flow" x1="182" y1="91" x2="214" y2="91" marker-end="url(#ar2-02)"/>
+        <line class="flow" x1="392" y1="91" x2="424" y2="91" marker-end="url(#ar2-02)"/>
+        <line class="flow" x1="602" y1="91" x2="634" y2="91" marker-end="url(#ar2-02)"/>
+        <line class="flow" x1="812" y1="91" x2="844" y2="91" marker-end="url(#ar2-02)"/>
+
+        <!-- data stores: open-ended rectangles -->
+        <rect class="store-fill" x="10"  y="240" width="170" height="48"/>
+        <line class="store-line" x1="10"  y1="240" x2="180" y2="240"/>
+        <line class="store-line" x1="10"  y1="288" x2="180" y2="288"/>
+        <text class="card" x="20" y="258">D1</text>
+        <text class="code" x="95" y="259" text-anchor="middle">storage/uploads</text>
+        <text class="lbl"  x="95" y="276" text-anchor="middle">the file, kept as sent</text>
+
+        <rect class="store-fill" x="220" y="240" width="170" height="48"/>
+        <line class="store-line" x1="220" y1="240" x2="390" y2="240"/>
+        <line class="store-line" x1="220" y1="288" x2="390" y2="288"/>
+        <text class="card" x="230" y="258">D2</text>
+        <text class="code" x="305" y="259" text-anchor="middle">sheet_tab</text>
+        <text class="lbl"  x="305" y="276" text-anchor="middle">one per worksheet</text>
+
+        <rect class="store-fill" x="430" y="240" width="170" height="48"/>
+        <line class="store-line" x1="430" y1="240" x2="600" y2="240"/>
+        <line class="store-line" x1="430" y1="288" x2="600" y2="288"/>
+        <text class="card" x="440" y="258">D3</text>
+        <text class="code" x="515" y="259" text-anchor="middle">*_record</text>
+        <text class="lbl"  x="515" y="276" text-anchor="middle">one per sheet row</text>
+
+        <rect class="store-fill" x="640" y="240" width="170" height="48"/>
+        <line class="store-line" x1="640" y1="240" x2="810" y2="240"/>
+        <line class="store-line" x1="640" y1="288" x2="810" y2="288"/>
+        <text class="card" x="650" y="258">D4</text>
+        <text class="code" x="725" y="259" text-anchor="middle">upload_batch</text>
+        <text class="lbl"  x="725" y="276" text-anchor="middle">stage + who signed</text>
+
+        <!-- process down to store -->
+        <line class="flow" x1="95"  y1="136" x2="95"  y2="234" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="103" y="190">file + sha256</text>
+
+        <line class="flow" x1="305" y1="136" x2="305" y2="234" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="313" y="190">header row, skips</text>
+
+        <line class="flow" x1="515" y1="136" x2="515" y2="234" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="523" y="190">mapped columns</text>
+
+        <line class="flow" x1="725" y1="136" x2="725" y2="234" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="733" y="190">stage, note, time</text>
+
+        <!-- 1.0 also opens the batch row -->
+        <path class="flow" d="M 180 112 H 200 V 320 H 700 V 294" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="208" y="336">1.0 opens the batch row &mdash; stage starts at pending_vertical</text>
+
+        <!-- reads into 5.0 -->
+        <path class="flow" d="M 600 264 H 620 V 380 H 900 V 140" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="628" y="396">rows joined to their batch, kept only where stage = approved</text>
+
+        <!-- out -->
+        <line class="flow" x1="930" y1="136" x2="930" y2="430" marker-end="url(#ar2-02)"/>
+        <text class="lbl" x="938" y="430">CSV &middot; SQL</text>
+      </svg>

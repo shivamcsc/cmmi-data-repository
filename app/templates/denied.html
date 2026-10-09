@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Not permitted</h1>
+<div class="alert error">{{ message }}</div>
+<p class="muted">You are signed in as <strong>{{ user.full_name }}</strong> ({{ auth.ROLE_LABELS[user.role] }}).</p>
+<p><a href="/">← back to the overview</a></p>
+{% endblock %}

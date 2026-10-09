@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Uploaded sheets</h1>
+
+{% if pending_count %}
+<div class="alert action">
+  <strong>{{ pending_count }} sheet(s) are waiting on your approval.</strong>
+  They are listed first below.
+  <a class="small-btn link-btn" href="/uploads?review={{ my_stage }}">Show only these</a>
+</div>
+{% elif my_stage %}
+<p class="muted">Nothing is waiting on your approval right now.</p>
+{% endif %}
+
+{% if rejected_count %}
+<div class="alert error">
+  <strong>{{ rejected_count }} sheet(s) were turned down.</strong>
+  The reason is shown against each one below — they need correcting and uploading again.
+  <a class="small-btn link-btn" href="/uploads?review=rejected">Show only these</a>
+</div>
+{% endif %}
+
+<form method="get" class="filters">
+  <label>Track
+    <select name="category">
+      <option value="">All</option>
+      {% for c in categories %}<option value="{{ c.id }}" {% if selected.category == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Project
+    <select name="project">
+      <option value="">All</option>
+      {% for c in categories %}<optgroup label="{{ c.name }}">
+        {% for p in c.projects %}<option value="{{ p.id }}" {% if selected.project == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+      </optgroup>{% endfor %}
+    </select>
+  </label>
+  <label>Period
+    <select name="period">
+      <option value="">All</option>
+      {% for p in periods %}<option value="{{ p.id }}" {% if selected.period == p.id %}selected{% endif %}>{{ p.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Stage
+    <select name="review">
+      <option value="">All</option>
+      {% for r, label in stages.items() %}
+      <option value="{{ r }}" {% if selected.review == r %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if user.role != 'uploader' %}
+  <label class="check"><input type="checkbox" name="mine" value="1" {% if selected.mine %}checked{% endif %}> only mine</label>
+  {% endif %}
+  <button type="submit">Filter</button>
+  <a class="btn-link" href="/uploads">Clear</a>
+</form>
+
+{% if uploads %}
+<table>
+  <thead>
+    <tr><th>Uploaded</th><th>Project</th><th>Period</th><th>File</th>
+        <th class="r">Rows</th><th>Read</th><th>Stage</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for u in uploads %}
+    <tr class="{{ 'dim' if u.is_superseded and u.stage != 'rejected' }}{{ ' mine' if u.id in approvable }}{{ ' turned' if u.stage == 'rejected' }}">
+      <td>{{ u.uploaded_at.strftime('%d %b %Y %H:%M') }}<br><span class="muted">{{ u.uploaded_by or '—' }}</span></td>
+      <td>{{ u.project.name }}<br><span class="tag {{ u.category.code }}">{{ u.category.cmmi_level }}</span></td>
+      <td>{{ u.period.label }}</td>
+      <td><a href="/uploads/{{ u.id }}">{{ u.original_filename }}</a>
+          {% if u.is_superseded and u.stage != 'rejected' %}<span class="review superseded">superseded</span>{% endif %}
+          {% if u.source_folder %}<br><span class="path">{{ u.source_folder }}</span>{% endif %}
+          {% if u.stage == 'rejected' and u.reject_reason %}
+          <div class="turned-down">
+            <strong>Turned down by {{ u.rejecter.full_name if u.rejecter else '—' }}</strong>
+            at the {{ auth.STAGE_LABELS[u.rejected_stage].replace('Awaiting ', '') }} stage
+            {%- if u.rejected_at %} on {{ u.rejected_at.strftime('%d %b %Y') }}{% endif %}:
+            <em>{{ u.reject_reason }}</em>
+          </div>
+          {% endif %}</td>
+      <td class="r">{{ u.row_count }}</td>
+      <td><span class="status {{ u.status }}">{{ u.status }}</span></td>
+      <td><span class="review {{ u.stage }}">{{ auth.STAGE_LABELS[u.stage] }}</span></td>
+      <td class="r nowrap">
+        {% if u.id in approvable %}
+          <a class="small-btn link-btn go-btn" href="/uploads/{{ u.id }}">Review &amp; approve →</a>
+        {% else %}
+          <a class="small-btn link-btn" href="/uploads/{{ u.id }}">Open</a>
+        {% endif %}
+        <a class="small-btn link-btn" href="/uploads/{{ u.id }}/file" title="Download the original file">⤓</a>
+        {% if auth.can_delete(user) %}
+        <form method="post" action="/uploads/{{ u.id }}/delete" class="inline"
+              onsubmit="return confirm('Delete {{ u.original_filename }} and every row read from it? This cannot be undone.');">
+          <button type="submit" class="small-btn danger-btn">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No uploads match. <a href="/upload">Upload a sheet</a>.</p>
+{% endif %}
+{% endblock %}

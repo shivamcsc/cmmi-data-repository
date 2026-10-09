@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block body %}
+
+{% if is_new %}
+<div class="alert ok">Sheet read successfully. Check below that the data was picked up correctly, then accept or discard it.</div>
+{% endif %}
+
+<div class="head">
+  <div>
+    <h1>{{ upload.original_filename }}</h1>
+    <p class="muted">
+      {{ upload.project.name }} &middot; {{ upload.period.label }}
+      {%- if upload.period.start_date %} ({{ upload.period.start_date.strftime('%d %b %Y') }} – {{ upload.period.end_date.strftime('%d %b %Y') }}){% endif %}
+      &middot; uploaded {{ upload.uploaded_at.strftime('%d %b %Y %H:%M') }}
+      {%- if upload.uploaded_by %} by {{ upload.uploaded_by }}{% endif %}
+      {%- if upload.source_folder %}<br><span class="path">{{ upload.source_folder }}</span>{% endif %}
+    </p>
+  </div>
+  <div class="badges">
+    <a class="small-btn link-btn" href="/uploads/{{ upload.id }}/file">⤓ Original file</a>
+    <span class="status {{ upload.status }}">{{ upload.status }}</span>
+    <span class="review {{ upload.stage }}">{{ auth.STAGE_LABELS[upload.stage] }}</span>
+    {% if upload.is_superseded and upload.stage != 'rejected' %}<span class="review superseded">superseded</span>{% endif %}
+  </div>
+</div>
+
+<div class="cards small">
+  <div class="card"><span class="num">{{ upload.sheet_count }}</span><span class="lbl">Sheets read</span></div>
+  <div class="card"><span class="num">{{ upload.row_count }}</span><span class="lbl">Rows stored</span></div>
+  <div class="card"><span class="num">{{ '%.0f'|format(upload.file_size / 1024) }} KB</span><span class="lbl">File size</span></div>
+</div>
+
+{% if upload.error_message %}<div class="alert error">{{ upload.error_message }}</div>{% endif %}
+{% if upload.notes %}<p class="note"><strong>Note:</strong> {{ upload.notes }}</p>{% endif %}
+
+<section class="decide top">
+  <h2>Approval</h2>
+
+  <ol class="chain">
+    <li class="done">
+      <span class="step">1 · Uploaded</span>
+      <span class="by">{{ upload.uploaded_by or '—' }}</span>
+      <span class="when">{{ upload.uploaded_at.strftime('%d %b %Y %H:%M') }}</span>
+    </li>
+    {% for step in [
+        ('2 · Vertical Head', 'pending_vertical', upload.vertical_approved_at, upload.vertical_approver, upload.vertical_note, 'vertical'),
+        ('3 · Admin',         'pending_admin',    upload.admin_approved_at,    upload.admin_approver,    upload.admin_note,    'admin'),
+        ('4 · CTO',           'pending_cto',      upload.cto_approved_at,      upload.cto_approver,      upload.cto_note,      'cto')] %}
+    <li class="step-{{ step[5] }} {{ 'done' if step[2] else ('turned' if upload.rejected_stage == step[1] else ('current' if upload.stage == step[1] else '')) }}">
+      <span class="step">{{ step[0] }}</span>
+      {% if step[2] %}
+        <span class="by">{{ step[3].full_name if step[3] else '—' }}</span>
+        <span class="when">{{ step[2].strftime('%d %b %Y %H:%M') }}</span>
+        {% if step[4] %}<span class="said">“{{ step[4] }}”</span>{% endif %}
+      {% elif upload.rejected_stage == step[1] %}
+        {# the stage where it was turned down: show who, when and why, here #}
+        <span class="by">{{ upload.rejecter.full_name if upload.rejecter else '—' }}</span>
+        <span class="when">{{ upload.rejected_at.strftime('%d %b %Y %H:%M') if upload.rejected_at else '' }}</span>
+        <span class="said">“{{ upload.reject_reason }}”</span>
+      {% elif upload.stage == 'rejected' %}
+        <span class="by muted">not reached</span>
+      {% else %}
+        <span class="by muted">awaiting approval</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if upload.stage == 'rejected' %}
+  <div class="alert error">
+    <strong>Turned down at the {{ auth.STAGE_LABELS[upload.rejected_stage].replace('Awaiting ', '') }} stage</strong>
+    by {{ upload.rejecter.full_name if upload.rejecter else '—' }}
+    on {{ upload.rejected_at.strftime('%d %b %Y %H:%M') }}.<br>
+    <em>{{ upload.reject_reason }}</em>
+  </div>
+  {% elif upload.stage == 'approved' %}
+  <div class="alert ok">Fully approved — this sheet now counts as data and appears in Browse and the exports.</div>
+  {% else %}
+  <p class="muted">Nothing here counts as data until all three approvals are given — Vertical Head, then Admin, then CTO. Browse and exports show approved sheets only.</p>
+  {% endif %}
+
+  {% if may_approve %}
+  <form method="post" class="form" id="decision">
+    <label>Comment
+      <input type="text" name="note" id="note" placeholder="optional when approving, required when turning down">
+    </label>
+    <div class="actions">
+      <button type="submit" formaction="/uploads/{{ upload.id }}/approve" class="primary">
+        {%- if upload.stage == 'pending_vertical' %}Approve and send to the Admin
+        {%- elif upload.stage == 'pending_admin' %}Approve and send to the CTO
+        {%- else %}Give final approval{% endif -%}
+      </button>
+      <button type="submit" formaction="/uploads/{{ upload.id }}/reject" class="danger"
+              onclick="if(!document.getElementById('note').value.trim()){alert('Please give a reason for turning this sheet down.');return false;} return confirm('Turn this sheet down?');">
+        Turn down
+      </button>
+    </div>
+  </form>
+  {% elif upload.stage in auth.STAGE_APPROVER %}
+  <p class="muted">Waiting on the {{ auth.ROLE_LABELS[auth.STAGE_APPROVER[upload.stage]] }}. You cannot approve at this stage.</p>
+  {% endif %}
+
+  {% if may_delete %}
+  <form method="post" action="/uploads/{{ upload.id }}/delete" class="danger-zone"
+        onclick="return confirm('Delete this upload and every row read from it? This cannot be undone.');">
+    <button type="submit" class="danger">Delete this upload (administrator)</button>
+  </form>
+  {% endif %}
+
+</section>
+
+<p class="muted">The rows read from this sheet are shown below — check them before deciding.</p>
+
+
+{% for p in previews %}
+  {% if p.tab.was_parsed %}
+  <section class="sheet">
+    <h2>{{ p.tab.sheet_name }}
+      <span class="chip {{ p.tab.sheet_kind }}">{{ p.tab.sheet_kind }}</span>
+    </h2>
+    <p class="muted">
+      Sheet &ldquo;{{ p.tab.sheet_name }}&rdquo; &middot; headers on row {{ p.tab.header_row }} &middot;
+      data from row {{ p.tab.data_start_row }} &middot;
+      {{ p.columns|length }} column(s) hold data &middot;
+      {{ p.tab.row_count }} rows stored
+      {% if p.shown < p.tab.row_count %}&middot; showing the first {{ p.shown }}{% endif %}
+    </p>
+
+    {% if p.extras %}
+    <div class="alert warn">
+      <strong>{{ p.extras|length }} column(s) were not recognised.</strong> They are kept with the row
+      in <code>extra_columns</code> rather than becoming table columns. Check these are expected:
+      <ul>{% for name in p.extras %}<li>{{ name }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <div class="scroll">
+      <table class="data">
+        <thead>
+          <tr>
+            <th class="rownum">Row</th>
+            {% for label in p.labels %}
+            <th>{{ label }}
+              {%- if p.units[loop.index0] %}<span class="unit">{{ p.units[loop.index0] }}</span>{% endif %}
+              {%- if p.cells and p.cells[loop.index0] %}<span class="cellref">column {{ p.cells[loop.index0] }}</span>{% endif %}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in p.rows %}
+          <tr>
+            <td class="rownum">{{ r.row_index }}</td>
+            {% for cell in r.cells %}<td>{{ cell }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+{% endfor %}
+
+{% set skipped = previews | rejectattr('tab.was_parsed') | list %}
+{% if skipped %}
+<section>
+  <h2>Sheets that were not loaded</h2>
+  <p class="muted">These tabs are not data collection sheets — estimation and size workings, revision history, scratch tabs. The original file keeps them.</p>
+  <table>
+    <thead><tr><th>Sheet</th><th>Reason</th></tr></thead>
+    <tbody>
+      {% for p in skipped %}
+      <tr><td>{{ p.tab.sheet_name }}</td><td class="muted">{{ p.tab.skip_reason }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<p class="back"><a href="/uploads">← all uploads</a>
+   {% if upload.stage == 'approved' %}&middot; <a href="/data?family={{ upload.category.code }}&project={{ upload.project_id }}">browse this project's data</a>{% endif %}</p>
+{% endblock %}

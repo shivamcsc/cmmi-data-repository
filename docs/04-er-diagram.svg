@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="780" viewBox="0 0 1020 780" role="img"
+           aria-label="Entity relationship diagram: category, project and reporting period feed upload batch, which owns sheet tabs and development and services records. User signs uploads and approvals and links to projects through user_project. Organogram entry and org person stand apart.">
+  <title>Entity relationships</title>
+  <style>
+    .bx   { fill:#ffffff; stroke:#0d1b3e; stroke-width:1.5 }
+    .ent  { fill:#eef1f6; stroke:#0d1b3e; stroke-width:1.5 }
+    .proc { fill:#ffffff; stroke:#2563eb; stroke-width:2 }
+    .store-line { stroke:#0d1b3e; stroke-width:1.5 }
+    .store-fill { fill:#eef1f6 }
+    .flow { stroke:#11162a; stroke-width:1.4; fill:none }
+    .flow-dash { stroke:#a12020; stroke-width:1.4; fill:none; stroke-dasharray:5 4 }
+    .t      { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:13px;   font-weight:600; fill:#11162a }
+    .t-sm   { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11.5px; font-weight:500; fill:#11162a }
+    .lbl    { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11px;   font-weight:500; fill:#616b80 }
+    .num    { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#2563eb }
+    .code   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11.5px; fill:#11162a }
+    .code-mut { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:10.5px; fill:#616b80 }
+    .card   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#616b80 }
+</style>
+  <rect width="1020" height="780" fill="#ffffff"/>
+        <defs>
+          <marker id="ar4-04" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- ===== reference band ===== -->
+        <rect class="bx" x="20" y="40" width="190" height="98" rx="6"/>
+        <rect x="20" y="40" width="190" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="20" y="52" width="190" height="12" fill="#0d1b3e"/>
+        <text class="code" x="30" y="57" fill="#ffffff">category</text>
+        <text class="card" x="200" y="57" text-anchor="end" fill="#ffffff">7</text>
+        <text class="code-mut" x="30" y="81">id &middot; code</text>
+        <text class="code-mut" x="30" y="97">name</text>
+        <text class="code-mut" x="30" y="113">cmmi_level</text>
+        <text class="lbl" x="30" y="130">ML 5.0 / ML 3.0 tracks</text>
+
+        <rect class="bx" x="20" y="200" width="190" height="98" rx="6"/>
+        <rect x="20" y="200" width="190" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="20" y="212" width="190" height="12" fill="#0d1b3e"/>
+        <text class="code" x="30" y="217" fill="#ffffff">project</text>
+        <text class="card" x="200" y="217" text-anchor="end" fill="#ffffff">11</text>
+        <text class="code-mut" x="30" y="241">id &middot; code</text>
+        <text class="code-mut" x="30" y="257" fill="#2563eb">category_id &rarr;</text>
+        <text class="code-mut" x="30" y="273">name</text>
+        <text class="lbl" x="30" y="290">CCTNS, CIBIL, Digipay&hellip;</text>
+
+        <rect class="bx" x="20" y="360" width="190" height="98" rx="6"/>
+        <rect x="20" y="360" width="190" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="20" y="372" width="190" height="12" fill="#0d1b3e"/>
+        <text class="code" x="30" y="377" fill="#ffffff">reporting_period</text>
+        <text class="card" x="200" y="377" text-anchor="end" fill="#ffffff">24</text>
+        <text class="code-mut" x="30" y="401">id &middot; label</text>
+        <text class="code-mut" x="30" y="417">start_date</text>
+        <text class="code-mut" x="30" y="433">end_date</text>
+        <text class="lbl" x="30" y="450">sorts by start_date</text>
+
+        <!-- ===== user band ===== -->
+        <rect class="bx" x="800" y="40" width="190" height="98" rx="6"/>
+        <rect x="800" y="40" width="190" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="800" y="52" width="190" height="12" fill="#0d1b3e"/>
+        <text class="code" x="810" y="57" fill="#ffffff">user</text>
+        <text class="card" x="980" y="57" text-anchor="end" fill="#ffffff">10</text>
+        <text class="code-mut" x="810" y="81">id &middot; username</text>
+        <text class="code-mut" x="810" y="97">role &middot; is_active</text>
+        <text class="code-mut" x="810" y="113">last_login_at</text>
+        <text class="lbl" x="810" y="130">created_by_id &#8635; self</text>
+
+        <rect class="bx" x="800" y="200" width="190" height="62" rx="6"/>
+        <rect x="800" y="200" width="190" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="800" y="212" width="190" height="12" fill="#0d1b3e"/>
+        <text class="code" x="810" y="217" fill="#ffffff">user_project</text>
+        <text class="card" x="980" y="217" text-anchor="end" fill="#ffffff">11</text>
+        <text class="code-mut" x="810" y="241" fill="#2563eb">user_id &middot; project_id</text>
+        <text class="lbl" x="810" y="256">which heads cover what</text>
+
+        <!-- ===== upload_batch ===== -->
+        <rect class="bx" x="370" y="180" width="250" height="186" rx="6"/>
+        <rect x="370" y="180" width="250" height="24" rx="6" fill="#2563eb"/>
+        <rect x="370" y="192" width="250" height="12" fill="#2563eb"/>
+        <text class="code" x="380" y="197" fill="#ffffff">upload_batch</text>
+        <text class="card" x="610" y="197" text-anchor="end" fill="#ffffff">51</text>
+        <text class="code-mut" x="380" y="221">id &middot; file_hash</text>
+        <text class="code-mut" x="380" y="237" fill="#2563eb">category_id &middot; project_id</text>
+        <text class="code-mut" x="380" y="253" fill="#2563eb">period_id</text>
+        <text class="code-mut" x="380" y="269">original_filename</text>
+        <text class="code-mut" x="380" y="285">stored_path</text>
+        <text class="code-mut" x="380" y="301" fill="#2563eb">stage</text>
+        <text class="code-mut" x="380" y="317" fill="#2563eb">uploaded_by_id</text>
+        <text class="code-mut" x="380" y="333" fill="#2563eb">{vertical,admin,cto}_approved_by_id</text>
+        <text class="code-mut" x="380" y="349" fill="#2563eb">rejected_by_id</text>
+
+        <!-- ===== sheet_tab ===== -->
+        <rect class="bx" x="370" y="470" width="250" height="98" rx="6"/>
+        <rect x="370" y="470" width="250" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="370" y="482" width="250" height="12" fill="#0d1b3e"/>
+        <text class="code" x="380" y="487" fill="#ffffff">sheet_tab</text>
+        <text class="card" x="610" y="487" text-anchor="end" fill="#ffffff">172</text>
+        <text class="code-mut" x="380" y="511" fill="#2563eb">upload_id</text>
+        <text class="code-mut" x="380" y="527">sheet_name &middot; header_row</text>
+        <text class="code-mut" x="380" y="543">was_parsed &middot; skip_reason</text>
+        <text class="lbl" x="380" y="560">why a worksheet was skipped</text>
+
+        <!-- ===== records ===== -->
+        <rect class="bx" x="700" y="440" width="290" height="114" rx="6"/>
+        <rect x="700" y="440" width="290" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="700" y="452" width="290" height="12" fill="#0d1b3e"/>
+        <text class="code" x="710" y="457" fill="#ffffff">development_record</text>
+        <text class="card" x="980" y="457" text-anchor="end" fill="#ffffff">540</text>
+        <text class="code-mut" x="710" y="481" fill="#2563eb">upload_id &middot; sheet_id</text>
+        <text class="code-mut" x="710" y="497" fill="#2563eb">project_id &middot; period_id</text>
+        <text class="code-mut" x="710" y="513">service_name &middot; 43 data columns</text>
+        <text class="code-mut" x="710" y="529">extra_columns (JSON)</text>
+        <text class="lbl" x="710" y="546">one row per module / CR / use case</text>
+
+        <rect class="bx" x="700" y="600" width="290" height="114" rx="6"/>
+        <rect x="700" y="600" width="290" height="24" rx="6" fill="#0d1b3e"/>
+        <rect x="700" y="612" width="290" height="12" fill="#0d1b3e"/>
+        <text class="code" x="710" y="617" fill="#ffffff">services_record</text>
+        <text class="card" x="980" y="617" text-anchor="end" fill="#ffffff">30,739</text>
+        <text class="code-mut" x="710" y="641" fill="#2563eb">upload_id &middot; sheet_id</text>
+        <text class="code-mut" x="710" y="657" fill="#2563eb">project_id &middot; period_id</text>
+        <text class="code-mut" x="710" y="673">request_id &middot; 21 data columns</text>
+        <text class="code-mut" x="710" y="689">extra_columns (JSON)</text>
+        <text class="lbl" x="710" y="706">one row per ticket</text>
+
+        <!-- ===== organogram pair ===== -->
+        <rect class="bx" x="20" y="580" width="230" height="76" rx="6" stroke-dasharray="4 3"/>
+        <rect x="20" y="580" width="230" height="24" rx="6" fill="#616b80"/>
+        <rect x="20" y="592" width="230" height="12" fill="#616b80"/>
+        <text class="code" x="30" y="597" fill="#ffffff">organogram_entry</text>
+        <text class="card" x="240" y="597" text-anchor="end" fill="#ffffff">11</text>
+        <text class="code-mut" x="30" y="621" fill="#2563eb">project_id</text>
+        <text class="code-mut" x="30" y="637">vertical &middot; head_name</text>
+
+        <rect class="bx" x="20" y="690" width="230" height="70" rx="6" stroke-dasharray="4 3"/>
+        <rect x="20" y="690" width="230" height="24" rx="6" fill="#616b80"/>
+        <rect x="20" y="702" width="230" height="12" fill="#616b80"/>
+        <text class="code" x="30" y="707" fill="#ffffff">org_person</text>
+        <text class="card" x="240" y="707" text-anchor="end" fill="#ffffff">156</text>
+        <text class="code-mut" x="30" y="731">name &middot; designation</text>
+        <text class="code-mut" x="30" y="747" fill="#2563eb">reports_to_id &#8635; self</text>
+
+        <!-- ===== relationships ===== -->
+        <!-- category 1-N project -->
+        <path class="flow" d="M 115 140 V 196" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="123" y="170">1</text>
+        <text class="lbl" x="123" y="190">N</text>
+
+        <!-- project -> upload_batch -->
+        <path class="flow" d="M 212 249 H 290 V 240 H 364" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="250" y="241">1</text>
+        <text class="lbl" x="345" y="233">N</text>
+
+        <!-- period -> upload_batch -->
+        <path class="flow" d="M 212 400 H 300 V 258 H 364" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="250" y="392">1</text>
+        <text class="lbl" x="345" y="272">N</text>
+
+        <!-- category -> upload_batch (direct fk) -->
+        <path class="flow" d="M 212 100 H 330 V 222 H 364" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="250" y="92">1</text>
+        <text class="lbl" x="345" y="216">N</text>
+
+        <!-- user -> upload_batch (five fks) -->
+        <path class="flow" d="M 796 112 H 660 V 320 H 626" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="668" y="236">1</text>
+        <text class="lbl" x="640" y="312">N</text>
+        <text class="lbl" x="668" y="252" fill="#2563eb">&times;5 &mdash; uploader,</text>
+        <text class="lbl" x="668" y="267" fill="#2563eb">3 approvers, rejecter</text>
+
+        <!-- user - user_project - project -->
+        <path class="flow" d="M 895 142 V 196" marker-end="url(#ar4-04)"/>
+        <path class="flow" d="M 796 231 H 700 V 150 H 260 V 249 H 214" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="420" y="143">vertical heads are scoped to their projects</text>
+
+        <!-- upload_batch -> sheet_tab -->
+        <path class="flow" d="M 495 370 V 464" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="503" y="396">1</text>
+        <text class="lbl" x="503" y="456">N</text>
+        <text class="lbl" x="513" y="426">ON DELETE CASCADE</text>
+
+        <!-- upload_batch -> records -->
+        <path class="flow" d="M 624 300 H 660 V 480 H 694" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="640" y="294">1</text>
+        <text class="lbl" x="672" y="474">N</text>
+        <path class="flow" d="M 660 480 V 640 H 694" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="672" y="634">N</text>
+
+        <!-- sheet_tab -> records -->
+        <path class="flow" d="M 624 520 H 660" marker-end="url(#ar4-04)"/>
+
+        <!-- project -> organogram_entry -->
+        <path class="flow" d="M 115 302 V 540 H 60 V 574" marker-end="url(#ar4-04)"/>
+        <text class="lbl" x="123" y="430">1</text>
+        <text class="lbl" x="68" y="566">N</text>
+
+        <text class="lbl" x="20" y="776">dashed = imported from the organogram PDFs, not from data collection sheets</text>
+      </svg>

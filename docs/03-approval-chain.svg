@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" role="img"
+           aria-label="State machine: a sheet starts at pending vertical, then pending admin, then pending CTO, then approved. From any pending stage it can be turned down into rejected.">
+  <title>Approval chain</title>
+  <style>
+    .bx   { fill:#ffffff; stroke:#0d1b3e; stroke-width:1.5 }
+    .ent  { fill:#eef1f6; stroke:#0d1b3e; stroke-width:1.5 }
+    .proc { fill:#ffffff; stroke:#2563eb; stroke-width:2 }
+    .store-line { stroke:#0d1b3e; stroke-width:1.5 }
+    .store-fill { fill:#eef1f6 }
+    .flow { stroke:#11162a; stroke-width:1.4; fill:none }
+    .flow-dash { stroke:#a12020; stroke-width:1.4; fill:none; stroke-dasharray:5 4 }
+    .t      { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:13px;   font-weight:600; fill:#11162a }
+    .t-sm   { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11.5px; font-weight:500; fill:#11162a }
+    .lbl    { font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif; font-size:11px;   font-weight:500; fill:#616b80 }
+    .num    { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#2563eb }
+    .code   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11.5px; fill:#11162a }
+    .code-mut { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:10.5px; fill:#616b80 }
+    .card   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#616b80 }
+</style>
+  <rect width="880" height="300" fill="#ffffff"/>
+        <defs>
+          <marker id="ar3-03" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect x="20"  y="60" width="170" height="56" rx="26" fill="#fdf3e0" stroke="#a06c0a" stroke-width="2"/>
+        <text class="code" x="105" y="84" text-anchor="middle" fill="#a06c0a">pending_vertical</text>
+        <text class="lbl" x="105" y="101" text-anchor="middle">on upload</text>
+
+        <rect x="225" y="60" width="170" height="56" rx="26" fill="#e4ecfb" stroke="#2563eb" stroke-width="2"/>
+        <text class="code" x="310" y="84" text-anchor="middle" fill="#2563eb">pending_admin</text>
+        <text class="lbl" x="310" y="101" text-anchor="middle">any project</text>
+
+        <rect x="430" y="60" width="170" height="56" rx="26" fill="#ece6fa" stroke="#6d3fc4" stroke-width="2"/>
+        <text class="code" x="515" y="84" text-anchor="middle" fill="#6d3fc4">pending_cto</text>
+        <text class="lbl" x="515" y="101" text-anchor="middle">final gate</text>
+
+        <rect x="635" y="60" width="170" height="56" rx="26" fill="#e4f3ea" stroke="#17663a" stroke-width="2"/>
+        <text class="code" x="720" y="84" text-anchor="middle" fill="#17663a">approved</text>
+        <text class="lbl" x="720" y="101" text-anchor="middle">counts as data</text>
+
+        <line class="flow" x1="192" y1="88" x2="219" y2="88" marker-end="url(#ar3-03)"/>
+        <text class="lbl" x="205" y="48" text-anchor="middle">head</text>
+        <line class="flow" x1="397" y1="88" x2="424" y2="88" marker-end="url(#ar3-03)"/>
+        <text class="lbl" x="410" y="48" text-anchor="middle">admin</text>
+        <line class="flow" x1="602" y1="88" x2="629" y2="88" marker-end="url(#ar3-03)"/>
+        <text class="lbl" x="615" y="48" text-anchor="middle">CTO</text>
+
+        <rect x="330" y="200" width="170" height="56" rx="26" fill="#fbe9e9" stroke="#a12020" stroke-width="2"/>
+        <text class="code" x="415" y="224" text-anchor="middle" fill="#a12020">rejected</text>
+        <text class="lbl" x="415" y="241" text-anchor="middle">reason recorded</text>
+
+        <path class="flow-dash" d="M 105 118 V 160 H 360 V 194" marker-end="url(#ar3-03)"/>
+        <path class="flow-dash" d="M 310 118 V 194" marker-end="url(#ar3-03)"/>
+        <path class="flow-dash" d="M 515 118 V 160 H 465 V 194" marker-end="url(#ar3-03)"/>
+        <text class="lbl" x="128" y="152" fill="#a12020">turned down at any stage &mdash; reason is required</text>
+
+        <text class="lbl" x="720" y="140" text-anchor="middle">supersedes the previous</text>
+        <text class="lbl" x="720" y="155" text-anchor="middle">sheet for that project + period</text>
+        <path class="flow" d="M 720 118 V 132" marker-end="url(#ar3-03)"/>
+      </svg>

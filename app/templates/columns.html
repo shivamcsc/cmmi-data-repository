@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Columns</h1>
+<p class="muted">Every sheet is mapped onto these fixed columns, whatever the original heading said, so the same measure stays comparable across projects and periods. Columns in <span class="chip keychip">bold</span> name the row and are indexed alongside the file name it was uploaded as.</p>
+
+{% for family, rows in families.items() %}
+<h2>{{ 'CMMI ML 5.0 (Development)' if family == 'development' else 'CMMI ML 3.0 (Services)' }}
+  <span class="chip">{{ rows|length }} columns</span></h2>
+<table>
+  <thead><tr><th>Group</th><th>Column</th><th>Shown as</th><th>Type</th><th>Unit</th><th>Holds data</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr class="{{ 'dim' if not r.filled }}">
+      <td>{{ r.group }}</td>
+      <td><code class="{{ 'keycol' if r.column == key_column[family] }}">{{ r.column }}</code></td>
+      <td>{{ r.label }}</td>
+      <td>{{ r.type }}</td>
+      <td>{{ r.unit or '' }}</td>
+      <td>{% if r.filled %}<span class="status success">yes</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+
+<h2>Deliberately not stored</h2>
+<p class="muted">These headings are recognised and skipped rather than treated as unknown columns:</p>
+<ul class="muted">
+  <li><strong>S.No.</strong> — a row counter, carries no information.</li>
+  <li><strong>Cycle Time, Effort Variance, Productivity, Defect Removal Effectiveness</strong> — the <em>FOR MQAS USE</em> block, filled in by MQAS rather than the project teams.</li>
+</ul>
+<p class="muted">Any other unrecognised column is kept in the row's <code>extra_columns</code> field, so nothing is lost.</p>
+{% endblock %}

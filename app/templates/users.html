@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Sign-ins</h1>
+
+{% if new_account %}
+<div class="alert ok">
+  <strong>{% if new_account.reset %}Password reset for{% else %}Account created for{% endif %}
+  {{ new_account.full_name }}.</strong>
+  Give them these once — the password is not shown again, and they must change it when they sign in.
+  <table class="credentials">
+    <tr><th>Login id</th><td><code>{{ new_account.username }}</code></td></tr>
+    <tr><th>Password</th><td><code>{{ new_account.password }}</code></td></tr>
+  </table>
+</div>
+{% endif %}
+{% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+
+<table>
+  <thead><tr><th>Name</th><th>Login id</th><th>Role</th><th>Projects</th><th>Last signed in</th><th></th></tr></thead>
+  <tbody>
+  {% for p in people %}
+    <tr class="{{ 'dim' if not p.is_active }}">
+      <td>{{ p.full_name }}{% if p.designation %}<br><span class="muted">{{ p.designation }}</span>{% endif %}</td>
+      <td><code>{{ p.username }}</code>{% if not p.is_active %} <span class="review rejected">disabled</span>{% endif %}</td>
+      <td><span class="tag {{ p.role }}">{{ auth.ROLE_LABELS[p.role] }}</span></td>
+      <td>
+        {% if p.role == 'vertical_head' %}
+          {% if p.projects %}{{ p.projects | map(attribute='name') | join(', ') }}
+          {% else %}<span class="muted">none assigned — approves nothing</span>{% endif %}
+          <details><summary class="muted small">change</summary>
+            <form method="post" action="/users/{{ p.id }}/projects" class="inline-form">
+              {% for c in categories %}<strong class="small">{{ c.name }}</strong>
+                {% for pr in c.projects %}
+                <label class="check"><input type="checkbox" name="project_ids" value="{{ pr.id }}"
+                  {% if pr in p.projects %}checked{% endif %}> {{ pr.name }}</label>
+                {% endfor %}
+              {% endfor %}
+              <button type="submit">Save projects</button>
+            </form>
+          </details>
+        {% elif p.role in ('cto', 'admin') %}<span class="muted">all projects</span>
+        {% else %}<span class="muted">—</span>{% endif %}
+      </td>
+      <td>{% if p.last_login_at %}{{ p.last_login_at.strftime('%d %b %Y %H:%M') }}{% else %}<span class="muted">never</span>{% endif %}</td>
+      <td class="r nowrap">
+        <form method="post" action="/users/{{ p.id }}/reset-password" class="inline">
+          <button type="submit" class="small-btn">Reset password</button>
+        </form>
+        {% if p.id != user.id %}
+        <form method="post" action="/users/{{ p.id }}/active" class="inline">
+          <button type="submit" class="small-btn">{{ 'Enable' if not p.is_active else 'Disable' }}</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Add a sign-in</h2>
+<form method="post" action="/users" class="form">
+  <div class="row">
+    <label>Full name <input type="text" name="full_name" required></label>
+    <label>Login id <input type="text" name="username" placeholder="e.g. r.kumar" required></label>
+  </div>
+  <div class="row">
+    <label>Email <input type="text" name="email"></label>
+    <label>Designation <input type="text" name="designation" placeholder="e.g. Vertical Head, Fisheries"></label>
+  </div>
+  <label>Role
+    <select name="role" id="role" onchange="document.getElementById('projbox').style.display = this.value === 'vertical_head' ? 'block' : 'none';">
+      {% for r in auth.ROLES %}<option value="{{ r }}">{{ auth.ROLE_LABELS[r] }} — {{ auth.ROLE_HELP[r] }}</option>{% endfor %}
+    </select>
+  </label>
+  <div id="projbox" style="display:none">
+    <fieldset>
+      <legend>Projects this vertical head approves</legend>
+      {% for c in categories %}
+        <p class="small"><strong>{{ c.name }}</strong></p>
+        {% for pr in c.projects %}
+        <label class="check"><input type="checkbox" name="project_ids" value="{{ pr.id }}"> {{ pr.name }}</label>
+        {% endfor %}
+      {% endfor %}
+    </fieldset>
+  </div>
+  <button type="submit">Create sign-in</button>
+  <p class="hint">A one-off password is generated and shown once. They must change it at first sign-in.</p>
+</form>
+{% endblock %}
