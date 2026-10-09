@@ -17,6 +17,7 @@
     .code   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11.5px; fill:#11162a }
     .code-mut { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:10.5px; fill:#616b80 }
     .card   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#616b80 }
+    .code.inv, .card.inv { fill:#ffffff }
 </style>
   <rect width="1020" height="470" fill="#ffffff"/>
         <defs>
@@ -42,12 +43,12 @@
         <text class="num" x="444" y="68">3.0</text>
         <text class="t-sm" x="515" y="88"  text-anchor="middle">Coerce &amp; store</text>
         <text class="lbl" x="515" y="105" text-anchor="middle">dates, numbers, text</text>
-        <text class="lbl" x="515" y="120" text-anchor="middle">unknowns &rarr; JSON</text>
+        <text class="lbl" x="515" y="120" text-anchor="middle">unknowns → JSON</text>
 
         <rect class="proc" x="640" y="48" width="170" height="86" rx="10"/>
         <text class="num" x="654" y="68">4.0</text>
-        <text class="t-sm" x="725" y="88"  text-anchor="middle">Approve &times;3</text>
-        <text class="lbl" x="725" y="105" text-anchor="middle">head &rarr; admin &rarr; CTO</text>
+        <text class="t-sm" x="725" y="88"  text-anchor="middle">Approve ×3</text>
+        <text class="lbl" x="725" y="105" text-anchor="middle">head → admin → CTO</text>
         <text class="lbl" x="725" y="120" text-anchor="middle">or turn down</text>
 
         <rect class="proc" x="850" y="48" width="160" height="86" rx="10"/>
@@ -110,7 +111,7 @@
 
         <!-- 1.0 also opens the batch row -->
         <path class="flow" d="M 180 112 H 200 V 320 H 700 V 294" marker-end="url(#ar2-02)"/>
-        <text class="lbl" x="208" y="336">1.0 opens the batch row &mdash; stage starts at pending_vertical</text>
+        <text class="lbl" x="208" y="336">1.0 opens the batch row — stage starts at pending_vertical</text>
 
         <!-- reads into 5.0 -->
         <path class="flow" d="M 600 264 H 620 V 380 H 900 V 140" marker-end="url(#ar2-02)"/>
@@ -118,5 +119,5 @@
 
         <!-- out -->
         <line class="flow" x1="930" y1="136" x2="930" y2="430" marker-end="url(#ar2-02)"/>
-        <text class="lbl" x="938" y="430">CSV &middot; SQL</text>
+        <text class="lbl" x="938" y="430">CSV · SQL</text>
       </svg>
