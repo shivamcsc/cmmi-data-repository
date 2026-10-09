@@ -17,7 +17,6 @@
     .code   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11.5px; fill:#11162a }
     .code-mut { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:10.5px; fill:#616b80 }
     .card   { font-family:'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace; font-size:11px;   font-weight:600; fill:#616b80 }
-    .code.inv, .card.inv { fill:#ffffff }
 </style>
   <rect width="880" height="300" fill="#ffffff"/>
         <defs>
@@ -56,7 +55,7 @@
         <path class="flow-dash" d="M 105 118 V 160 H 360 V 194" marker-end="url(#ar3-03)"/>
         <path class="flow-dash" d="M 310 118 V 194" marker-end="url(#ar3-03)"/>
         <path class="flow-dash" d="M 515 118 V 160 H 465 V 194" marker-end="url(#ar3-03)"/>
-        <text class="lbl" x="128" y="152" fill="#a12020">turned down at any stage — reason is required</text>
+        <text class="lbl" x="128" y="152" fill="#a12020">turned down at any stage &mdash; reason is required</text>
 
         <text class="lbl" x="720" y="140" text-anchor="middle">supersedes the previous</text>
         <text class="lbl" x="720" y="155" text-anchor="middle">sheet for that project + period</text>
