@@ -39,7 +39,9 @@
   <ol class="chain">
     <li class="done">
       <span class="step">1 · Uploaded</span>
-      <span class="by">{{ upload.uploaded_by or '—' }}</span>
+      {# the admin account both uploads and gives the admin sign-off, so step 1
+         names the action rather than repeating the name shown at step 3 #}
+      <span class="by">User Upload</span>
       <span class="when">{{ upload.uploaded_at.strftime('%d %b %Y %H:%M') }}</span>
     </li>
     {% for step in [

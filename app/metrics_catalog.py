@@ -172,7 +172,15 @@ FAMILY_ANCHORS = {
                  "response_time", "resolution_time"},
 }
 
-MIN_SIGNALS = {"development": 4, "services": 3}
+#: how many of FAMILY_SIGNALS a header row must resolve before the sheet counts
+#: as a data collection sheet. The anchor above is not enough on its own: the
+#: CIBIL 'Size Estimation July26' tab carries Component, Size, Planned Effort
+#: and Actual Effort, so it cleared the anchor and scored exactly 4, loading 49
+#: sizing rows (Number of Web Pages, SubTotal, Component Weight) as modules.
+#: Every genuine Development sheet scores 7 or more, so 6 separates them with a
+#: margin either side. Services logs are far narrower -- the e-district
+#: priority-wise log scores 3 -- so that family keeps its lower bar.
+MIN_SIGNALS = {"development": 6, "services": 3}
 
 #: ambiguous headers in services logs, resolved by which phase precedes them
 PHASE_AMBIGUOUS = {

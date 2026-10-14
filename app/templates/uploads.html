@@ -101,6 +101,6 @@
   </tbody>
 </table>
 {% else %}
-<p class="muted">No uploads match. <a href="/upload">Upload a sheet</a>.</p>
+<p class="muted">No uploads match.{% if auth.can_upload(user) %} <a href="/upload">Upload a sheet</a>.{% endif %}</p>
 {% endif %}
 {% endblock %}

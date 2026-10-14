@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Projects</h1>
+<p class="muted">Which projects each track holds. A track with no projects cannot be
+  chosen on the upload form, so adding one here is what opens it for uploading.</p>
+
+{% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+{% if created %}<div class="alert ok"><strong>Added {{ created.name }}</strong>
+  to {{ created.category.name }}, with the code <code>{{ created.code }}</code>.</div>{% endif %}
+
+{% for g in groups %}
+<h2>{{ g.category.name }} <span class="tag {{ g.category.code }}">{{ g.category.cmmi_level }}</span></h2>
+{% if g.projects %}
+<table>
+  <thead><tr><th>Project</th><th>Code</th><th>Uploads</th><th></th></tr></thead>
+  <tbody>
+  {% for p in g.projects %}
+    <tr>
+      <td>{{ p.row.name }}</td>
+      <td><code>{{ p.row.code }}</code></td>
+      <td>{{ p.uploads or '—' }}</td>
+      <td class="actions">
+        {% if p.uploads %}
+          <span class="muted small">has data — cannot be removed</span>
+        {% else %}
+          <form method="post" action="/projects/{{ p.row.id }}/delete"
+                onsubmit="return confirm('Remove {{ p.row.name }}? Nothing is filed against it.');">
+            <button class="small-btn danger" type="submit">Remove</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No projects yet — this track does not appear on the upload form.</p>
+{% endif %}
+{% endfor %}
+
+<h2>Add a project</h2>
+<form method="post" action="/projects" class="form">
+  <div class="row">
+    <label>Track
+      <select name="category_id" required>
+        <option value="">Choose…</option>
+        {% for g in groups %}<option value="{{ g.category.id }}">{{ g.category.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Project name <input type="text" name="name" required placeholder="e.g. Digipay"></label>
+  </div>
+  <label>Code <input type="text" name="code" placeholder="left blank, taken from the name">
+    <span class="hint">Used to name the folder its files are stored under, and to match
+      a folder during a bulk import. Lower case, no spaces.</span></label>
+  <button type="submit">Add project</button>
+</form>
+{% endblock %}

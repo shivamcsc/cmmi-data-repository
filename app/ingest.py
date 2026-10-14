@@ -140,27 +140,128 @@ def coerce(value, kind, limit):
 # --------------------------------------------------------------------------
 # Reading workbooks
 # --------------------------------------------------------------------------
+#: columns whose value is written once and understood to hold until it changes.
+#: A blank effort or date means blank; a blank project name does not.
+CARRY_DOWN = {
+    "development": ("department", "project_name", "service_name"),
+    "services": (),
+}
+
+
+def merged_spans(worksheet):
+    """
+    {(row, column): value} for every cell a merge covers but the file leaves empty.
+
+    Excel stores a merged block's value in its top-left cell only, so a module
+    merged down its three sub-module rows reads as the name once and then None
+    twice. The reader fills the rest back in.
+    """
+    spans = {}
+    for area in worksheet.merged_cells.ranges:
+        # Down only, never across. A merge spanning one row is a banner or a
+        # note -- 'Note: External Testing is ongoing' is merged B9:J9, nine
+        # columns wide -- and spreading it sideways would write that sentence
+        # into the size and effort columns.
+        if area.max_row == area.min_row:
+            continue
+        value = worksheet.cell(area.min_row, area.min_col).value
+        if value is None:
+            continue
+        for row in range(area.min_row + 1, area.max_row + 1):
+            spans[(row, area.min_col)] = value
+    return spans
+
+
+def fill_merged(row, number, spans):
+    """Put the merged value back into the cells Excel left empty."""
+    if not spans:
+        return row
+    for position in range(len(row)):
+        if row[position] is None:
+            value = spans.get((number, position + 1))
+            if value is not None:
+                row[position] = value
+    return row
+
+
+def has_measurement(values, positions):
+    """
+    True when the row carries at least one measured value.
+
+    A data collection row records something: a size, an effort, a date, a
+    defect count. The blocks the teams write below the table -- a note typed
+    into the Department cell, a Legend of 'Weekends excluded' and '1 working
+    day = 8 hours' -- carry text and nothing else, and the reader would
+    otherwise take them as modules, because they sit fewer than
+    BLANK_RUN_LIMIT rows under the last real one.
+    """
+    for position in positions:
+        if position < len(values) and not is_blank(values[position]):
+            return True
+    return False
+
+
+def measure_positions(columns, family):
+    """Where the columns that hold a measurement sit, identity columns aside."""
+    identity = set(CARRY_DOWN.get(family, ()))
+    return [i for i, (column, _raw, _ignored) in enumerate(columns)
+            if column and column not in identity]
+
+
+def carry_down(rows, columns, family):
+    """
+    Carry an identity column's value down the rows beneath it.
+
+    'NFDP' is typed once at the top of Project Name and the cells below are
+    simply left empty -- no merge, so there is nothing to expand. Every row
+    belongs to that project all the same. Only the columns in CARRY_DOWN are
+    treated this way: a blank effort or date means blank.
+    """
+    wanted = CARRY_DOWN.get(family, ())
+    if not wanted:
+        return
+    positions = [(i, c) for i, (c, _raw, _ignored) in enumerate(columns) if c in wanted]
+    if not positions:
+        return
+    last = {}
+    for row in rows:
+        values = row["values"]
+        for position, column in positions:
+            if position >= len(values):
+                continue
+            if is_blank(values[position]):
+                if column in last:
+                    values[position] = last[column]
+            else:
+                last[column] = values[position]
+
+
 def read_sheets(path):
     """[(sheet_name, [[cell, ...], ...]), ...] for xlsx/xlsm/xls/csv."""
     name = str(path).lower()
     if name.endswith((".xlsx", ".xlsm")):
         import openpyxl
 
-        book = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        # read_only would be lighter, but merged_cells is not populated in that
+        # mode and the teams merge the module column down its sub-module rows,
+        # so the module name would be read for the first row only.
+        book = openpyxl.load_workbook(path, data_only=True)
         try:
             out = []
             for sheet_name in book.sheetnames:
                 worksheet = book[sheet_name]
+                spans = merged_spans(worksheet)
                 rows, blank_run = [], 0
-                for row in worksheet.iter_rows(values_only=True):
+                for number, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+                    row = fill_merged(list(row), number, spans)
                     if all(is_blank(c) for c in row):
                         blank_run += 1
-                        rows.append(list(row))
+                        rows.append(row)
                         if blank_run >= BLANK_RUN_LIMIT:
                             break
                     else:
                         blank_run = 0
-                        rows.append(list(row))
+                        rows.append(row)
                     if len(rows) >= MAX_ROWS:
                         break
                 out.append((sheet_name, rows))
@@ -231,6 +332,14 @@ def parse_workbook(path):
             if all(is_blank(c) for c in row):
                 continue
             info["rows"].append({"row_index": offset, "values": list(row)})
+
+        # Drop the notes and legend blocks before carrying anything down: a
+        # note typed into the Department cell below the table would otherwise
+        # be carried onto every row beneath it.
+        measures = measure_positions(info["columns"], family)
+        if measures:
+            info["rows"] = [r for r in info["rows"] if has_measurement(r["values"], measures)]
+        carry_down(info["rows"], info["columns"], family)
         info["row_count"] = len(info["rows"])
         parsed.append(info)
     return parsed
@@ -340,16 +449,10 @@ def load_upload(session, upload, stored_path, allow_duplicate=False):
     else:
         upload.status = "success"
 
-    if upload.status in ("success", "partial"):
-        for prior in session.scalars(
-            select(UploadBatch).where(
-                UploadBatch.project_id == upload.project_id,
-                UploadBatch.period_id == upload.period_id,
-                UploadBatch.id != upload.id,
-                UploadBatch.is_superseded.is_(False),
-            )
-        ):
-            prior.is_superseded = True
+    # Uploads stand on their own. A later sheet for the same project and period
+    # no longer marks the earlier one superseded: the period label is inferred
+    # from folder text written by eleven different teams, so "same period" is
+    # not a safe enough test for "replaces". Only a rejection sets the flag now.
 
     session.commit()
     return sheets

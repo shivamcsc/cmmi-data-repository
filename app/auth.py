@@ -171,7 +171,13 @@ def redirect_to_login(request):
 # Permissions
 # --------------------------------------------------------------------------
 def can_upload(user):
-    return user is not None
+    """
+    Sending a sheet in belongs to the uploader. The administrator keeps it too,
+    because they load the back catalogue and stand in when a team cannot --
+    and the chain still holds, since the admin gives only the SECOND sign-off
+    and the vertical head must pass it first.
+    """
+    return user is not None and user.role in (UPLOADER, ADMIN)
 
 
 def can_delete(user):
@@ -180,6 +186,15 @@ def can_delete(user):
 
 
 def can_manage_users(user):
+    return user is not None and user.role == ADMIN
+
+
+def can_manage_projects(user):
+    """
+    Adding a project opens a track for uploading, so it stays with the
+    administrator -- the same role that creates the sign-ins which will
+    then be assigned to it.
+    """
     return user is not None and user.role == ADMIN
 
 

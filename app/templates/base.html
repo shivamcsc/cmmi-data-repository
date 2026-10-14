@@ -11,13 +11,14 @@
   <div class="wrap bar">
     <a class="brand" href="/">CMMI Data Repository</a>
     <nav>
-      <a href="/upload">Upload sheet</a>
+      {% if user and auth.can_upload(user) %}<a href="/upload">Upload sheet</a>{% endif %}
       <a href="/uploads">Uploads{% if pending_count %} <span class="badge">{{ pending_count }}</span>{% endif %}</a>
       <a href="/data">Browse Data</a>
       <a href="/columns">Column Data</a>
       <a href="/organogram">Organogram</a>
       <a href="/hierarchy">Hierarchy</a>
       {% if user and auth.can_see_activity(user) %}<a href="/activity">Activity</a>{% endif %}
+      {% if user and auth.can_manage_projects(user) %}<a href="/projects">Projects</a>{% endif %}
       {% if user and auth.can_manage_users(user) %}<a href="/users">Sign-ins</a>{% endif %}
     </nav>
     {% if user %}

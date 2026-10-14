@@ -51,6 +51,6 @@
   </tbody>
 </table>
 {% else %}
-<p class="muted">Nothing uploaded yet. <a href="/upload">Upload the first sheet</a>.</p>
+<p class="muted">Nothing uploaded yet.{% if auth.can_upload(user) %} <a href="/upload">Upload the first sheet</a>.{% endif %}</p>
 {% endif %}
 {% endblock %}

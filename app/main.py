@@ -369,6 +369,9 @@ def dashboard(request: Request, db: Session = Depends(get_session)):
 @app.get("/upload", response_class=HTMLResponse)
 def upload_form(request: Request, db: Session = Depends(get_session)):
     user = auth.load_user(request, db)
+    if not auth.can_upload(user):
+        return deny(request, "Only an uploader can send a sheet in. "
+                             "Approvers review what has been uploaded.")
     known = list(db.scalars(select(ReportingPeriod).order_by(ReportingPeriod.start_date.desc())))
     return render(request, "upload.html",
                   categories=service.categories_with_projects(db),
@@ -390,6 +393,9 @@ def upload_submit(
     db: Session = Depends(get_session),
 ):
     user = auth.load_user(request, db)
+    if not auth.can_upload(user):
+        return deny(request, "Only an uploader can send a sheet in. "
+                             "Approvers review what has been uploaded.")
 
     def fail(message):
         known = list(db.scalars(select(ReportingPeriod).order_by(ReportingPeriod.start_date.desc())))
@@ -583,17 +589,8 @@ def upload_approve(upload_id: int, request: Request, note: Optional[str] = Form(
     setattr(upload, "%s_note" % field, comment)
     upload.stage = auth.NEXT_STAGE[upload.stage]
 
-    if upload.stage == auth.APPROVED:
-        # a fully approved sheet replaces whatever was approved before it
-        for prior in db.scalars(
-            select(UploadBatch).where(
-                UploadBatch.project_id == upload.project_id,
-                UploadBatch.period_id == upload.period_id,
-                UploadBatch.id != upload.id,
-                UploadBatch.is_superseded.is_(False),
-            )
-        ):
-            prior.is_superseded = True
+    # Approving a sheet no longer supersedes the others for that project and
+    # period. Every upload is kept as a separate record.
     db.commit()
     return RedirectResponse("/uploads/%d" % upload_id, status_code=303)
 
@@ -645,6 +642,81 @@ def upload_delete(upload_id: int, request: Request, db: Session = Depends(get_se
     except OSError:
         pass
     return RedirectResponse("/uploads", status_code=303)
+
+
+# --------------------------------------------------------------------------
+# Projects
+# --------------------------------------------------------------------------
+def _projects_page(request, db, error=None, created=None):
+    """Every track with its projects, so an empty constellation is visible."""
+    rows = []
+    for category in db.scalars(select(Category).order_by(Category.id)):
+        projects = []
+        for project in sorted(category.projects, key=lambda p: p.name):
+            uploads = db.scalar(
+                select(func.count(UploadBatch.id)).where(UploadBatch.project_id == project.id)
+            ) or 0
+            projects.append({"row": project, "uploads": uploads})
+        rows.append({"category": category, "projects": projects})
+    return render(request, "projects.html", groups=rows, error=error, created=created)
+
+
+@app.get("/projects", response_class=HTMLResponse)
+def projects_page(request: Request, db: Session = Depends(get_session)):
+    user = auth.load_user(request, db)
+    if not auth.can_manage_projects(user):
+        return deny(request, "Only an administrator can add or remove projects.")
+    return _projects_page(request, db)
+
+
+@app.post("/projects", response_class=HTMLResponse)
+def projects_create(request: Request, category_id: int = Form(...), name: str = Form(...),
+                    code: Optional[str] = Form(None), db: Session = Depends(get_session)):
+    user = auth.load_user(request, db)
+    if not auth.can_manage_projects(user):
+        return deny(request, "Only an administrator can add or remove projects.")
+
+    category = db.get(Category, category_id)
+    if category is None:
+        return _projects_page(request, db, error="Pick a track.")
+    label = (name or "").strip()
+    if not label:
+        return _projects_page(request, db, error="Give the project a name.")
+
+    # the code is what the bulk import matches a folder against, so default it
+    # from the name rather than asking for something nobody will think about
+    slug = (code or "").strip() or service.slugify(label, 64).lower()
+    clash = db.scalar(select(Project).where(Project.category_id == category.id,
+                                            Project.code == slug))
+    if clash is not None:
+        return _projects_page(request, db,
+                              error="%s already has a project with the code %r." % (category.name, slug))
+
+    project = Project(category_id=category.id, code=slug[:64], name=label[:255])
+    db.add(project)
+    db.commit()
+    return _projects_page(request, db, created=project)
+
+
+@app.post("/projects/{project_id}/delete")
+def projects_delete(project_id: int, request: Request, db: Session = Depends(get_session)):
+    """Remove a project that has nothing filed against it."""
+    user = auth.load_user(request, db)
+    if not auth.can_manage_projects(user):
+        return deny(request, "Only an administrator can add or remove projects.")
+    project = db.get(Project, project_id)
+    if project is None:
+        return RedirectResponse("/projects", status_code=303)
+    uploads = db.scalar(
+        select(func.count(UploadBatch.id)).where(UploadBatch.project_id == project.id)
+    ) or 0
+    if uploads:
+        return _projects_page(request, db,
+                              error="%s has %d upload(s) filed against it and cannot be removed."
+                                    % (project.name, uploads))
+    db.delete(project)
+    db.commit()
+    return RedirectResponse("/projects", status_code=303)
 
 
 # --------------------------------------------------------------------------

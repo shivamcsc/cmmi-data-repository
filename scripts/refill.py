@@ -1,20 +1,27 @@
 """
-Re-read the date columns of every stored workbook and fill in what the parser
-used to drop.
+Re-read every stored workbook and fill in the columns the parser used to drop.
 
-A date typed into a cell Excel treats as text stays text, and the teams type
-them several ways, so `to_date` used to return None for roughly one date cell
-in five -- the column was then stored NULL and the row looked like it had no
-such date. Widening the format list fixes new uploads; this fills in the ones
-already loaded, reading each upload's original file back off disk.
+Two things left columns empty that should not have been:
 
-Only date columns are touched, and only where the stored value is NULL and the
-sheet has something that now parses: nothing already loaded is overwritten, so
-a correctly parsed date cannot be changed by a re-run.
+  Dates. A date typed into a cell Excel treats as text stays text, and the
+  teams type them several ways, so `to_date` returned None for roughly one
+  date cell in five and the row looked like it had no such date.
 
-    python scripts/refill_dates.py --dry-run     say what would change
-    python scripts/refill_dates.py               apply it
-    python scripts/refill_dates.py --project cibil
+  Merged and carried-down cells. Excel keeps a merged block's value in its
+  top-left cell only, so a module merged down its sub-module rows was read
+  once and then came back empty; and 'NFDP' is typed once at the top of
+  Project Name with the cells below simply left blank.
+
+Fixing the reader fixes new uploads; this fills in the ones already loaded,
+reading each upload's original file back off disk.
+
+Only a column that is NULL now and has a value in the sheet is written:
+nothing already loaded is overwritten, so a re-run cannot change a value that
+parsed correctly the first time.
+
+    python scripts/refill.py --dry-run     say what would change
+    python scripts/refill.py               apply it
+    python scripts/refill.py --project nfdp_fisheries
 """
 import argparse
 import sys
@@ -30,10 +37,16 @@ from app.db import SessionLocal
 from app.models import RECORD_MODELS, Project, UploadBatch
 
 
-def date_columns():
-    """{family: [column names that hold a date]}"""
-    return {family: [c for c, (kind, _limit) in ingest.column_types(model).items() if kind == "date"]
-            for family, model in RECORD_MODELS.items()}
+def fillable_columns():
+    """
+    {family: [columns worth re-reading]} -- every date, plus the identity
+    columns a merge or a carried-down value used to leave empty.
+    """
+    out = {}
+    for family, model in RECORD_MODELS.items():
+        dates = [c for c, (kind, _limit) in ingest.column_types(model).items() if kind == "date"]
+        out[family] = list(dict.fromkeys(dates + list(ingest.CARRY_DOWN.get(family, ()))))
+    return out
 
 
 def rows_by_position(session, model, upload_id):
@@ -43,13 +56,13 @@ def rows_by_position(session, model, upload_id):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Backfill dates the old parser dropped.")
+    parser = argparse.ArgumentParser(description="Backfill columns the old reader dropped.")
     parser.add_argument("--dry-run", action="store_true", help="report without writing")
     parser.add_argument("--project", help="limit to one project code, e.g. cibil")
     args = parser.parse_args()
 
     session = SessionLocal()
-    dates = date_columns()
+    fillable = fillable_columns()
     filled = Counter()
     per_upload = Counter()
     missing_files = []
@@ -81,8 +94,9 @@ def main():
                 if not sheet.get("parsed") or family not in RECORD_MODELS:
                     continue
                 model = RECORD_MODELS[family]
-                wanted = set(dates[family])
-                # where each date column sits in this sheet
+                wanted = set(fillable[family])
+                types = ingest.column_types(model)
+                # where each fillable column sits in this sheet
                 positions = [(i, column) for i, (column, _raw, _ignored)
                              in enumerate(sheet["columns"]) if column in wanted]
                 if not positions:
@@ -98,7 +112,13 @@ def main():
                             continue
                         if getattr(record, column) is not None:
                             continue                      # never overwrite what is already there
-                        value = ingest.to_date(row["values"][index])
+                        cell = row["values"][index]
+                        if ingest.is_blank(cell):
+                            continue
+                        # coerce the way the loader would -- a date column
+                        # wants a date, a name column wants trimmed text
+                        kind, limit = types.get(column, ("text", None))
+                        value = ingest.coerce(cell, kind, limit)
                         if value is None:
                             continue
                         setattr(record, column, value)
@@ -106,7 +126,7 @@ def main():
                         per_upload[upload.original_filename] += 1
 
         total = sum(filled.values())
-        print("=== dates filled in ===")
+        print("=== values filled in ===")
         for column, count in filled.most_common():
             print("  %6d  %s" % (count, column))
         print("\n=== by file ===")
